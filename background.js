@@ -80,7 +80,11 @@ async function callJev(settings, body) {
     }
     const ms = performance.now() - start;
     const json = await retryRes.json();
-    chrome.action.setBadgeText({ text: "" });
+    try {
+      chrome.action.setBadgeText({ text: "" });
+    } catch {
+      // best-effort
+    }
     return { json, ms };
   }
 
@@ -243,9 +247,27 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
   const timer = setTimeout(async () => {
     debounceTimers.delete(tabId);
+
+    // Re-fetch the tab instead of reusing the snapshot captured when the
+    // event fired: 800ms is long enough for the user to have manually
+    // grouped/pinned the tab, or for it to have navigated again, and we
+    // must not act against a stale groupId/pinned/url. chrome.tabs.get
+    // throws when the tab has since closed; drop the run quietly then.
+    let freshTab;
+    try {
+      freshTab = await chrome.tabs.get(tabId);
+    } catch {
+      return;
+    }
+    if (freshTab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE || freshTab.pinned) return;
+    if (!/^https?:/.test(freshTab.url || "")) return;
+
     const settings = await getSettings();
-    if (tab.incognito && !settings.allowIncognito) return;
-    await classifyAndGroup([tab], tab.windowId);
+    if (freshTab.incognito && !settings.allowIncognito) return;
+
+    classifyAndGroup([freshTab], freshTab.windowId).catch((err) => {
+      console.warn("TabJev: classifyAndGroup failed in onUpdated handler", err);
+    });
   }, 800);
   debounceTimers.set(tabId, timer);
 });
@@ -262,7 +284,9 @@ chrome.action.onClicked.addListener(async (tab) => {
   const windowId = tab.windowId;
   const tabs = await chrome.tabs.query({ windowId });
   const ungrouped = tabs.filter((t) => t.groupId === chrome.tabGroups.TAB_GROUP_ID_NONE);
-  await classifyAndGroup(ungrouped, windowId);
+  await classifyAndGroup(ungrouped, windowId).catch((err) => {
+    console.warn("TabJev: classifyAndGroup failed in action.onClicked handler", err);
+  });
 });
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -272,7 +296,9 @@ chrome.runtime.onStartup.addListener(async () => {
   for (const win of windows) {
     const tabs = await chrome.tabs.query({ windowId: win.id });
     const ungrouped = tabs.filter((t) => t.groupId === chrome.tabGroups.TAB_GROUP_ID_NONE);
-    await classifyAndGroup(ungrouped, win.id);
+    await classifyAndGroup(ungrouped, win.id).catch((err) => {
+      console.warn(`TabJev: classifyAndGroup failed in onStartup handler (windowId ${win.id})`, err);
+    });
   }
 });
 
