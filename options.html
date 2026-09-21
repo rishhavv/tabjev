@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>TabJev settings</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --border: #e2e2e6;
+    --text: #1a1a1e;
+    --text-muted: #6b6b74;
+    --accent: #5b5bd6;
+    --accent-contrast: #ffffff;
+    --danger: #c2410c;
+    --success: #16794f;
+    --code-bg: #f0f0f4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16161a;
+      --surface: #1f1f24;
+      --border: #33333a;
+      --text: #ececef;
+      --text-muted: #9a9aa4;
+      --accent: #8585f0;
+      --accent-contrast: #101014;
+      --danger: #f28b6b;
+      --success: #5fd6a4;
+      --code-bg: #2a2a31;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 48px 24px 96px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 650;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  section h2 {
+    font-size: 15px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field:last-child {
+    margin-bottom: 0;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .checkbox-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .checkbox-row input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .checkbox-row label {
+    font-size: 14px;
+  }
+
+  input[type="password"],
+  input[type="text"],
+  input[type="url"],
+  textarea {
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    resize: vertical;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .help {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 6px 0 0;
+  }
+
+  .help a {
+    color: var(--accent);
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+
+  button:hover {
+    filter: brightness(0.97);
+  }
+
+  .status {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .status.ok {
+    color: var(--success);
+  }
+
+  .status.err {
+    color: var(--danger);
+  }
+
+  .saved-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--text);
+    color: var(--bg);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .saved-indicator.show {
+    opacity: 1;
+  }
+
+  .threshold-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .threshold-row input[type="range"] {
+    flex: 1;
+  }
+
+  .threshold-row output {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  .privacy-note {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 14px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  #logSummary {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 12px 0 0;
+  }
+
+  .log-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .log-header-row h2 {
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>TabJev</h1>
+    <p class="subtitle">Every new tab sorts itself into a group. Bring your own Jev key.</p>
+  </header>
+
+  <section>
+    <h2>API key</h2>
+    <div class="field">
+      <label class="field-label" for="apiKey">Jev API key</label>
+      <input type="password" id="apiKey" autocomplete="off" placeholder="sk-..." />
+      <p class="help">Get a key at <a href="https://console.typesafe.ai/settings/keys" target="_blank" rel="noopener noreferrer">console.typesafe.ai/settings/keys</a>.</p>
+      <div class="row" style="margin-top: 10px;">
+        <button id="test" type="button">Test key</button>
+        <span id="testResult" class="status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Endpoint</h2>
+    <div class="field">
+      <label class="field-label" for="baseUrl">Base URL</label>
+      <input type="url" id="baseUrl" placeholder="https://api.typesafe.ai" />
+      <p id="baseUrlHelp" class="help">Change this to use OpenRouter, the Vercel AI Gateway, or Cloudflare AI Gateway instead of TypeSafe directly.</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="model">Model</label>
+      <input type="text" id="model" placeholder="jev-latest" />
+      <p class="help"><code>jev-latest</code> tracks the newest release. Pin an exact version such as <code>jev-1.13.0</code> if you want stability.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Grouping</h2>
+    <div class="checkbox-row">
+      <input type="checkbox" id="useExisting" />
+      <label for="useExisting">Use my existing tab groups as options</label>
+    </div>
+    <div class="field">
+      <label class="field-label" for="rules">Extra groups</label>
+      <textarea id="rules" rows="6" placeholder="Work | jira, google docs, email, calendar, company wiki
+Dev | github, stack overflow, api docs, localhost
+Social | twitter, reddit, linkedin, instagram
+Video | youtube, netflix, twitch
+Shopping | amazon, flipkart, product and checkout pages
+Reading | news, blogs, newsletters, long articles"></textarea>
+      <p class="help">One per line, <code>Name | description</code>. Lines starting with <code>#</code> are ignored.</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="threshold">Confidence threshold</label>
+      <div class="threshold-row">
+        <input type="range" id="threshold" min="0.3" max="0.9" step="0.05" />
+        <output id="thresholdOut">0.55</output>
+      </div>
+      <p class="help">Below this confidence, a tab is left alone.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Privacy and behaviour</h2>
+    <div class="checkbox-row">
+      <input type="checkbox" id="stripQuery" />
+      <label for="stripQuery">Strip query strings and hashes before sending a URL</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="groupOnStartup" />
+      <label for="groupOnStartup">Group every window when Chrome starts</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="allowIncognito" />
+      <label for="allowIncognito">Also group incognito tabs</label>
+    </div>
+    <p class="privacy-note">The page URL and title of each new tab are sent to the endpoint configured above, and nowhere else. There is no telemetry.</p>
+  </section>
+
+  <section>
+    <h2>Enabled</h2>
+    <div class="checkbox-row">
+      <input type="checkbox" id="enabled" />
+      <label for="enabled">Extension active</label>
+    </div>
+    <p class="help">A rejected API key switches this off automatically.</p>
+  </section>
+
+  <section>
+    <div class="log-header-row">
+      <h2>Recent decisions</h2>
+      <button id="clearLog" type="button">Clear log</button>
+    </div>
+    <table id="log">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Site</th>
+          <th>Group</th>
+          <th>Confidence</th>
+          <th>Latency</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p id="logSummary"></p>
+  </section>
+</main>
+
+<div id="savedIndicator" class="saved-indicator">Saved</div>
+
+<script type="module" src="options.js"></script>
+</body>
+</html>
