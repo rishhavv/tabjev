@@ -33,11 +33,19 @@ milliseconds instead of seconds — is the whole reason grouping can run on
 
 ## Install
 
-There is no Chrome Web Store listing. This is a load-unpacked extension:
+There is no Chrome Web Store listing and no tagged release yet, so you install
+from source. There is nothing to build: the repo as it stands is the extension.
 
-1. Download the zip from [Releases](https://github.com/rishhavv/tabjev/releases) and unzip it.
-2. Open `chrome://extensions`, turn on Developer mode (top right).
-3. Click "Load unpacked" and select the unzipped folder.
+```sh
+git clone https://github.com/rishhavv/tabjev.git
+```
+
+Or use the green **Code** button above, pick **Download ZIP**, and unzip it.
+Then:
+
+1. Open `chrome://extensions` and turn on Developer mode, top right.
+2. Click **Load unpacked**.
+3. Select the `tabjev` folder, the one with `manifest.json` directly inside it.
 
 Chrome will show a "disable developer mode extensions" nag on every browser
 launch. That's the honest cost of not being on the Web Store — there is
@@ -125,7 +133,7 @@ Defaults and behavior are read straight out of `DEFAULTS` in `lib.js`.
 | `stripQuery` | `true` | Strip the query string and hash from a URL before it's sent. |
 | `groupOnStartup` | `false` | Classify every ungrouped tab in every window when Chrome starts. |
 | `allowIncognito` | `false` | Also classify tabs in incognito windows. |
-| `enabled` | `true` | Master switch. Chrome sets this to `false` automatically if the API rejects your key (401/403). |
+| `enabled` | `true` | Master switch. TabJev sets this to `false` itself if the API rejects your key (401 or 403), and a successful Test key turns it back on. |
 
 ## Development
 

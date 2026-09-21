@@ -1,3 +1,7 @@
+<!-- Draft body for the v0.1.0 GitHub Release. No release is cut yet.
+     The "download the zip below" line only becomes true once the release
+     exists with tabjev-v0.1.0.zip attached. -->
+
 ## TabJev v0.1.0
 
 TabJev sorts new tabs into your Chrome tab groups automatically, asking Jev
