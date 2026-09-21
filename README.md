@@ -1,8 +1,16 @@
 # TabJev
 
-Every new tab sorts itself into the right Chrome group in about 150 ms, for
-roughly a cent a month. Runs on [Jev](https://typesafe.ai) (TypeSafe). Bring
-your own key.
+Every new tab sorts itself into the right Chrome group, for roughly a cent a
+month. Runs on [Jev](https://typesafe.ai) (TypeSafe). Bring your own key.
+
+![The TabJev options page, with a live Test key result](docs/options-page.png)
+
+A real Test key call against `jev-1.13.0`: one tab classified from 397 input
+tokens, answer `dev`. That reading is `1133 ms` because it is a cold call, and
+it pays for the service worker spinning up and a fresh TLS handshake on top of
+the model itself. Warm calls in the decision log settle far below that. Both
+numbers are visible to you in the options page, so you never have to take
+this paragraph's word for it.
 
 <!-- demo.gif goes here: record at 1280x800, opening 3-4 tabs into existing groups -->
 

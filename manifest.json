@@ -3,7 +3,7 @@
   "minimum_chrome_version": "89",
   "name": "TabJev – auto tab groups",
   "version": "0.1.0",
-  "description": "Sorts every new tab into a Chrome tab group in ~150 ms using Jev (TypeSafe). Bring your own key.",
+  "description": "Sorts every new tab into a Chrome tab group using Jev (TypeSafe), a typed decision model. Bring your own key.",
   "permissions": ["tabs", "tabGroups", "storage"],
   "host_permissions": ["https://api.typesafe.ai/*"],
   "optional_host_permissions": ["https://*/*"],
