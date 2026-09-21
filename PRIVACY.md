@@ -24,6 +24,10 @@ sent (`stripQuery`, on by default). This matters because a query string can
 carry a session token or other sensitive parameter that has no business
 leaving your browser.
 
+A page controls its own title, and that title is sent as part of the
+classification question, so a hostile title can at most influence how its own
+tab is grouped.
+
 ## What it stores, and where
 
 Your API key, the endpoint, and all other settings are stored in

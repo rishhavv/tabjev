@@ -2,12 +2,24 @@
 // chrome namespace. This is the frozen contract shared by background.js,
 // options.js and tests.
 
+// C1: shipped as the default so a zero-configuration install groups the very
+// first tab. Without a seeded rule set a new user has no tab groups, so the
+// only criterion is `none` and the extension is a permanent silent no-op.
+export const DEFAULT_RULES = [
+  "Work | jira, google docs, email, calendar, company wiki",
+  "Dev | github, stack overflow, api docs, localhost",
+  "Social | twitter, reddit, linkedin, instagram",
+  "Video | youtube, netflix, twitch",
+  "Shopping | amazon, flipkart, product and checkout pages",
+  "Reading | news, blogs, newsletters, long articles",
+].join("\n");
+
 export const DEFAULTS = Object.freeze({
   apiKey: "",
   baseUrl: "https://api.typesafe.ai",
   model: "jev-latest",
   useExisting: true,
-  rules: "",
+  rules: DEFAULT_RULES,
   threshold: 0.55,
   stripQuery: true,
   groupOnStartup: false,
@@ -168,7 +180,10 @@ export function decide(answer, threshold) {
   } else {
     p = 1;
   }
-  if (p < threshold) return null;
+  // Fail closed: when `probabilities` exists but carries no entry for the
+  // chosen key, `p` is undefined and `undefined < threshold` is false, which
+  // would group the tab in spite of the threshold.
+  if (!(p >= threshold)) return null;
   return { key: answer.choice, p };
 }
 

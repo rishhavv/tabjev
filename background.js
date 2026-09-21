@@ -17,6 +17,11 @@ import {
 // redirect chain), swap for a keyed structure. Upgrade path: none needed
 // until MV3 gives workers a real event-scoped state store.
 const debounceTimers = new Map();
+// Tab ids whose debounced run has passed its first await and is still going.
+// The debounce map entry is gone by then, so without this a second
+// `status:"complete"` (redirect chain, OAuth bounce, SPA navigation) finds no
+// timer to clear, still sees groupId === -1, and classifies the tab twice.
+const inFlight = new Set();
 
 async function getSettings() {
   return chrome.storage.local.get(DEFAULTS);
@@ -178,14 +183,19 @@ async function classifyAndGroup(tabs, windowId) {
   for (const tab of candidates) {
     const answer = answers["t" + tab.id];
     const decision = decide(answer, settings.threshold);
-    if (decision) {
-      const target = targets[decision.key];
-      decisions.set(tab.id, {
-        key: decision.key,
-        p: decision.p,
-        title: target ? target.title : decision.key,
-      });
+    if (!decision) continue;
+    const target = targets[decision.key];
+    if (!target) {
+      // The model returned a key that is not a grouping target, so the tab is
+      // never grouped. Leave it out of `decisions` so the log says so too.
+      console.warn(`TabJev: Jev returned unknown choice "${decision.key}" for tab ${tab.id}`);
+      continue;
     }
+    decisions.set(tab.id, {
+      key: decision.key,
+      p: decision.p,
+      title: target.title,
+    });
   }
 
   // Group decided tabs by target key so each target is one grouping call.
@@ -206,19 +216,31 @@ async function classifyAndGroup(tabs, windowId) {
         let gid = createdGroups.get(key);
         if (gid === undefined) {
           gid = await chrome.tabs.group({ tabIds, createProperties: { windowId } });
-          await chrome.tabGroups.update(gid, {
-            title: target.title,
-            color: pickColor(target.title),
-          });
           createdGroups.set(key, gid);
+          try {
+            await chrome.tabGroups.update(gid, {
+              title: target.title,
+              color: pickColor(target.title),
+            });
+          } catch (err) {
+            // Without this the user gets an untitled grey group and no trace.
+            console.warn(
+              `TabJev: chrome.tabGroups.update failed for group ${gid} ("${target.title}")`,
+              err
+            );
+          }
         } else {
           await chrome.tabs.group({ tabIds, groupId: gid });
         }
       }
-    } catch {
+    } catch (err) {
       // A tab can close between the API response and the grouping call, and
       // Chrome throws "No tab with id ...". One dead tab must not abort the
       // rest of the batch, so we swallow and continue.
+      console.warn(
+        `TabJev: chrome.tabs.group failed for tabs [${tabIds.join(", ")}] into "${target.title}"`,
+        err
+      );
     }
   }
 
@@ -245,29 +267,36 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   const existing = debounceTimers.get(tabId);
   if (existing) clearTimeout(existing);
 
+  if (inFlight.has(tabId)) return;
+
   const timer = setTimeout(async () => {
     debounceTimers.delete(tabId);
-
-    // Re-fetch the tab instead of reusing the snapshot captured when the
-    // event fired: 800ms is long enough for the user to have manually
-    // grouped/pinned the tab, or for it to have navigated again, and we
-    // must not act against a stale groupId/pinned/url. chrome.tabs.get
-    // throws when the tab has since closed; drop the run quietly then.
-    let freshTab;
+    if (inFlight.has(tabId)) return;
+    inFlight.add(tabId);
     try {
-      freshTab = await chrome.tabs.get(tabId);
-    } catch {
-      return;
+      // Re-fetch the tab instead of reusing the snapshot captured when the
+      // event fired: 800ms is long enough for the user to have manually
+      // grouped/pinned the tab, or for it to have navigated again, and we
+      // must not act against a stale groupId/pinned/url. chrome.tabs.get
+      // throws when the tab has since closed; drop the run quietly then.
+      let freshTab;
+      try {
+        freshTab = await chrome.tabs.get(tabId);
+      } catch {
+        return;
+      }
+      if (freshTab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE || freshTab.pinned) return;
+      if (!/^https?:/.test(freshTab.url || "")) return;
+
+      const settings = await getSettings();
+      if (freshTab.incognito && !settings.allowIncognito) return;
+
+      await classifyAndGroup([freshTab], freshTab.windowId).catch((err) => {
+        console.warn("TabJev: classifyAndGroup failed in onUpdated handler", err);
+      });
+    } finally {
+      inFlight.delete(tabId);
     }
-    if (freshTab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE || freshTab.pinned) return;
-    if (!/^https?:/.test(freshTab.url || "")) return;
-
-    const settings = await getSettings();
-    if (freshTab.incognito && !settings.allowIncognito) return;
-
-    classifyAndGroup([freshTab], freshTab.windowId).catch((err) => {
-      console.warn("TabJev: classifyAndGroup failed in onUpdated handler", err);
-    });
   }, 800);
   debounceTimers.set(tabId, timer);
 });

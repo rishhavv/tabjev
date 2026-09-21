@@ -112,7 +112,7 @@ Defaults and behavior are read straight out of `DEFAULTS` in `lib.js`.
 | `baseUrl` | `https://api.typesafe.ai` | Endpoint that receives the classification request. Change it to route through OpenRouter or a gateway. |
 | `model` | `jev-latest` | Model name sent in each request. |
 | `useExisting` | `true` | Include your current tab groups as options Jev can pick from. |
-| `rules` | `""` | Extra groups as `name \| description` lines, one per group, for tabs that don't fit an existing group. |
+| `rules` | six seeded lines: `Work`, `Dev`, `Social`, `Video`, `Shopping`, `Reading` (see `DEFAULT_RULES` in `lib.js`) | Extra groups as `name \| description` lines, one per group, for tabs that don't fit an existing group. |
 | `threshold` | `0.55` | Minimum probability required before a tab is moved. Below it, the tab is left ungrouped. |
 | `stripQuery` | `true` | Strip the query string and hash from a URL before it's sent. |
 | `groupOnStartup` | `false` | Classify every ungrouped tab in every window when Chrome starts. |

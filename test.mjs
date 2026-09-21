@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   DEFAULTS,
+  DEFAULT_RULES,
   LOG_MAX,
   GROUP_COLORS,
   parseRules,
@@ -120,6 +121,19 @@ test("buildCriteria: the 254 cap truncates the tail", () => {
   assert.equal("rule254" in criteria, false);
 });
 
+test("buildCriteria: the shipped DEFAULTS.rules alone give a usable criteria set", () => {
+  // C1 regression: a fresh install has zero tab groups. If DEFAULTS.rules is
+  // empty the only criterion is `none`, buildRequest refuses the body and the
+  // extension is a permanent silent no-op.
+  const { criteria, targets } = buildCriteria([], DEFAULTS.rules, true);
+  assert.equal(Object.keys(criteria).length > 1, true);
+  assert.deepEqual(Object.keys(criteria), [
+    "none", "work", "dev", "social", "video", "shopping", "reading",
+  ]);
+  assert.equal(Object.keys(targets).length, 6);
+  assert.equal(DEFAULTS.rules, DEFAULT_RULES);
+});
+
 test("buildCriteria: targets never contains none", () => {
   const { targets } = buildCriteria(
     [{ id: 1, title: "Work", description: "" }],
@@ -211,6 +225,13 @@ test("decide: missing probabilities falls back to confidence", () => {
 test("decide: a clear winner returns {key, p}", () => {
   const answer = { type: "choice", choice: "work", probabilities: { none: 0.02, work: 0.91 } };
   assert.deepEqual(decide(answer, 0.55), { key: "work", p: 0.91 });
+});
+
+test("decide: probabilities without an entry for the choice fails closed", () => {
+  // I3 regression: p is undefined here, and `undefined < threshold` is false,
+  // so the old comparison grouped the tab in spite of the threshold.
+  const answer = { type: "choice", choice: "dev", probabilities: { other: 0.9 } };
+  assert.equal(decide(answer, 0.55), null);
 });
 
 test("decide: falsy answer returns null", () => {

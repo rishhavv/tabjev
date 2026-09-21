@@ -61,20 +61,32 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (LOG_KEY in changes) {
     renderLog();
   }
+  // The service worker writes `enabled: false` on a 401/403. An options page
+  // left open must not keep showing the extension as active.
+  if (changes.enabled) {
+    el.enabled.checked = changes.enabled.newValue;
+  }
 });
+
+// Re-enable after the worker disabled us on a 401/403: store the flag, clear
+// the badge, tick the box. Used by both the key field and a passing Test key.
+async function markEnabled() {
+  await chrome.storage.local.set({ enabled: true });
+  try {
+    await chrome.action.setBadgeText({ text: "" });
+  } catch {
+    // best-effort
+  }
+  el.enabled.checked = true;
+}
 
 // --- Simple field saves -----------------------------------------------
 
 el.apiKey.addEventListener("change", async () => {
   const value = el.apiKey.value;
   if (value !== "") {
-    await chrome.storage.local.set({ apiKey: value, enabled: true });
-    try {
-      await chrome.action.setBadgeText({ text: "" });
-    } catch {
-      // best-effort
-    }
-    el.enabled.checked = true;
+    await chrome.storage.local.set({ apiKey: value });
+    await markEnabled();
   } else {
     await chrome.storage.local.set({ apiKey: value });
   }
@@ -225,7 +237,9 @@ el.test.addEventListener("click", async () => {
   const ms = Math.round(performance.now() - start);
 
   if (res.status === 401 || res.status === 403) {
-    setTestResult("Key rejected (401).", "err");
+    // 403 is the likely status for an out-of-credit key, so reporting it as a
+    // 401 sends the user off to regenerate a key that was never the problem.
+    setTestResult(`Key rejected (${res.status}).`, "err");
     return;
   }
   if (res.status === 429) {
@@ -248,6 +262,8 @@ el.test.addEventListener("click", async () => {
   const answer = json.answers ? json.answers["t1"] : undefined;
   const picked = answer ? answer.choice : "unknown";
   const inputTokens = json.usage?.input_tokens ?? 0;
+  // A passing test proves the key works, so undo any 401/403 auto-disable.
+  await markEnabled();
   setTestResult(
     `OK · ${json.model} · ${ms}ms · ${inputTokens} input tokens · picked "${picked}"`,
     "ok"
